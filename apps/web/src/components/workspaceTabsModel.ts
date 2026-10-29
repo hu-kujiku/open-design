@@ -286,18 +286,18 @@ export function reorderTabsById(
 }
 
 /**
- * Tabs eligible for the project switcher dropdown: project tabs only, in
- * most-recently-used order. Marketplace and plugin-detail views are transient
- * navigation, not workspace entities, and must not appear alongside projects
- * (issue #8493).
+ * Tabs eligible for the project switcher dropdown: project tabs only.
+ * Marketplace and plugin-detail views are transient navigation, not workspace
+ * entities, and must not appear alongside projects (issue #8493). Ordering is
+ * caller-provided: pass `mruRank` for most-recently-used order, or omit it to
+ * keep workspace strip order and let the caller apply its own sort.
  */
 export function projectSwitcherTabs(
   tabs: WorkspaceChromeTab[],
-  mruRank: (tab: WorkspaceChromeTab) => number,
+  mruRank?: (tab: WorkspaceChromeTab) => number,
 ): WorkspaceChromeTab[] {
-  return tabs
-    .filter((tab) => tab.kind === 'project')
-    .sort((a, b) => mruRank(a) - mruRank(b));
+  const projectTabs = tabs.filter((tab) => tab.kind === 'project');
+  return mruRank ? projectTabs.sort((a, b) => mruRank(a) - mruRank(b)) : projectTabs;
 }
 
 /**

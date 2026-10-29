@@ -189,4 +189,18 @@ describe('projectSwitcherTabs', () => {
 
     expect(projectSwitcherTabs(tabs, (tab) => -tab.lastActiveAt)).toEqual([]);
   });
+
+  it('keeps workspace strip order when no rank is provided', () => {
+    const tabs = [
+      projectTab('project:p2:1', 'p2', 9),
+      entryTab('entry:home:1', 1),
+      projectTab('project:p1:1', 'p1', 5),
+      marketplaceTab('marketplace:pa:1', 'pa', 6),
+    ];
+
+    expect(projectSwitcherTabs(tabs).map((tab) => tab.id)).toEqual([
+      'project:p2:1',
+      'project:p1:1',
+    ]);
+  });
 });

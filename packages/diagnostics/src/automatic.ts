@@ -27,6 +27,8 @@ export interface AutomaticDiagnosticSource extends LogSource {
   /** Bytes before the last consent boundary must never enter an automatic upload. */
   startOffset?: number;
   omitReason?: string;
+  /** Keeps only the lines that belong to the incident from a log shared by many runs. */
+  selectLines?: (lines: string[]) => string[];
 }
 
 /** Read the filtered tail with bounded memory, even for receipt-only or oversized lines. */
@@ -117,9 +119,14 @@ export async function buildAutomaticDiagnostics(input: {
         : await collectLogSource({ ...source, tailBytes: limit }, input.redaction);
       input.signal?.throwIfAborted();
       if (file.error) { notes.push({ name: source.name, reason: 'source_unavailable' }); continue; }
+      let lines = String(file.content ?? '').split('\n');
+      if (source.selectLines) {
+        lines = source.selectLines(lines);
+        if (lines.length === 0) { notes.push({ name: source.name, reason: 'no_matching_records' }); continue; }
+      }
       if (size > limit) notes.push({ name: source.name, reason: 'tail_truncated' });
       // Text logs can contain JSONL credentials: redact each complete JSON record structurally.
-      const content = String(file.content ?? '').split('\n')
+      const content = lines
         .filter((line) => !line.startsWith(DIAGNOSTIC_DELIVERY_LOG_PREFIX))
         .map((line) => redactJsonText(line, input.redaction)).join('\n');
       const encoded = JSON.stringify({ type: 'file', name: source.name, content }) + '\n';
